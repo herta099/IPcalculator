@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Subnet Calculator</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <h1>🌐 Subnet Calculator</h1>
+        <p class="subtitle">Calculate network subnets, IP ranges, and host information</p>
+        
+        <form id="calcForm">
+            <div class="input-group">
+                <label for="ip">IP Address <span class="tooltip" data-tip="Enter a valid IPv4 address">ⓘ</span></label>
+                <div class="input-wrapper">
+                    <span class="icon">🖥️</span>
+                    <input id="ip" type="text" placeholder="e.g., 192.168.1.10">
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="network">Network ID <span class="tooltip" data-tip="Base network address">ⓘ</span></label>
+                <div class="input-wrapper">
+                    <span class="icon">🌐</span>
+                    <input id="network" type="text" placeholder="e.g., 192.168.1.0">
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div>
+                    <div class="input-group">
+                        <label for="mask">Subnet Mask <span class="tooltip" data-tip="Network mask in dotted decimal or prefix (e.g., 255.255.255.0 or /24)">ⓘ</span></label>
+                        <div class="input-wrapper">
+                            <span class="icon">🔒</span>
+                            <input id="mask" type="text" placeholder="e.g., 255.255.255.0 or /24">
+                        </div>
+                    </div>
+                    <div style="margin-top:8px; display:flex; gap:12px; align-items:center;">
+                        <button type="submit" class="btn calc-btn">✨ Calculate</button>
+                        <div class="small-note">Tip: use `/24` or `255.255.255.0` for masks; leave mask empty to assume /24.</div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="nr_subnets">Number of Subnets <span class="tooltip" data-tip="How many subnets to create">ⓘ</span></label>
+                    <div class="input-wrapper">
+                        <span class="icon">🔢</span>
+                        <input id="nr_subnets" type="number" placeholder="e.g., 4" min="1">
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div id="results" style="display:none;">
+        <div class="card results">
+            <div class="result-header">
+                <div class="result-title">📊 Results</div>
+                <div class="result-actions">
+                    <button id="copyAllBtn" class="copy-btn" title="Copy all results">📋</button>
+                    <button type="button" class="btn btn-secondary" onclick="resetForm()">🔄 Reset</button>
+                </div>
+            </div>
+
+            <div id="basicResults" class="result-section"></div>
+            <div id="subnetResults" class="result-section"></div>
+            <div id="resultsNotes" class="result-notes"></div>
+        </div>
+    </div>
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
