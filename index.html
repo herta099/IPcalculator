@@ -2,7 +2,8 @@
 <html lang="sq">
 <head>
 <meta charset="UTF-8">
-<title>Calculate</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Subnet Calculator</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -13,15 +14,49 @@
 
 <div class="container">
     <div class="card">
-        <h1>Subnet Calculator</h1>
+        <h1>🌐 Subnet Calculator</h1>
 
-        <input id="ip" type="text" placeholder="IP Address (192.168.1.10)">
-        <input id="mask" type="text" placeholder="Mask (/24)">
-        
-        <button onclick="goToResults()">Calculate</button>
+        <form id="calcForm">
+            <div class="input-group">
+                <label>🖥️ IP Address</label>
+                <input id="ip" type="text" placeholder="192.168.1.10" required>
+            </div>
+
+            <div class="input-group">
+                <label>🎯 Network Address (opsional)</label>
+                <input id="network" type="text" placeholder="192.168.1.0">
+            </div>
+
+            <div class="input-group">
+                <label>🔢 Subnet Mask</label>
+                <input id="mask" type="text" placeholder="/24 ose 255.255.255.0">
+            </div>
+
+            <div class="input-group">
+                <label>📊 Numri i Subnet-eve (opsional)</label>
+                <input id="nr_subnets" type="number" placeholder="4" min="1">
+            </div>
+            
+            <button type="submit" class="btn-primary">📈 Kalkulo</button>
+        </form>
     </div>
 </div>
 
-<script src="script.js"></script>
+<script>
+document.getElementById('calcForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const data = {
+        ip: document.getElementById('ip').value.trim(),
+        network: document.getElementById('network').value.trim(),
+        mask: document.getElementById('mask').value.trim(),
+        nr_subnets: document.getElementById('nr_subnets').value.trim()
+    };
+    
+    localStorage.setItem('subnetData', JSON.stringify(data));
+    window.location.href = 'results.html';
+});
+</script>
+
 </body>
 </html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rezultatet - Subnet Calculator</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<video class="video-bg" autoplay muted loop>
+    <source src="p2.mp4" type="video/mp4">
+</video>
+
+<div class="container">
+    <div class="card results-card">
+        <div class="header-section">
+            <h1>📊 Rezultatet</h1>
+            <button onclick="window.location.href='index.html'" class="btn-back">← Kthehu</button>
+        </div>
+
+        <div id="resultsNotes"></div>
+
+        <div id="basicResults"></div>
+
+        <div id="subnetResults"></div>
+
+        <div class="action-buttons">
+            <button id="copyAllBtn" class="btn-secondary">📋 Kopjo të gjitha</button>
+            <button id="showAllSubnetsBtn" class="btn-secondary" style="display:none;">🔍 Shfaq të gjitha subnetet</button>
+            <button onclick="window.location.href='index.html'" class="btn-primary">🔄 Kalkulo përsëri</button>
+        </div>
+    </div>
+</div>
+
+<input type="hidden" id="ip">
+<input type="hidden" id="network">
+<input type="hidden" id="mask">
+<input type="hidden" id="nr_subnets">
+
+<script src="script.js"></script>
+<script>
+window.addEventListener('DOMContentLoaded', function() {
+    const savedData = localStorage.getItem('subnetData');
+    if (!savedData) {
+        window.location.href = 'index.html';
+        return;
+    }
+    
+    const data = JSON.parse(savedData);
+    document.getElementById('ip').value = data.ip || '';
+    document.getElementById('network').value = data.network || '';
+    document.getElementById('mask').value = data.mask || '';
+    document.getElementById('nr_subnets').value = data.nr_subnets || '';
+    
+    calculate();
+});
+</script>
+
+</body>
+</html>

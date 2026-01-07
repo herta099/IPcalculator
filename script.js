@@ -53,14 +53,14 @@ function parseMask(maskStr) {
     // dotted decimal
     if (isValidIp(maskStr)) {
         const m = ip2long(maskStr);
-        const p = (m === 0) ? 0 : (32 - Math.clz32(~m)); // count 1s from left
+        const p = prefixFromMaskLong(m);
         return { prefix: p, maskLong: m };
     }
     return null;
 }
 
 function formatNumber(n) {
-    return String(n);
+    return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
 function calculate() {
@@ -76,7 +76,6 @@ function calculate() {
     let maskInfo = parseMask(maskInput);
     const defaultPrefix = 24;
     if (!maskInfo) {
-        // We'll set to default only if necessary and note it
         maskInfo = { prefix: defaultPrefix, maskLong: maskForPrefix(defaultPrefix) };
     }
 
@@ -87,21 +86,28 @@ function calculate() {
 
     if (network) {
         if (!isValidIp(network)) {
-            return showError('Network address is not a valid IPv4 address.');
+            return showError('Adresa e rrjetit nuk është një IPv4 e vlefshme.');
         }
         const netCandidate = ip2long(network) & maskL;
         baseNetL = netCandidate >>> 0;
-        if (!maskInput) notes.push(`No mask provided — assumed /${basePrefix}.`);
+        if (!maskInput) notes.push(`Nuk u dha mask - u supozua /${basePrefix}.`);
     } else if (ip) {
         if (!isValidIp(ip)) {
-            return showError('IP address is not a valid IPv4 address.');
+            return showError('Adresa IP nuk është e vlefshme.');
         }
-        // Use provided mask or default
         baseNetL = (ip2long(ip) & maskL) >>> 0;
-        if (!maskInput) notes.push(`No mask provided — assumed /${basePrefix}.`);
+        if (!maskInput) notes.push(`Nuk u dha mask - u supozua /${basePrefix}.`);
     } else {
-        return showError('Provide at least an IP address or a Network address.');
+        return showError('Ju lutem vendosni të paktën një adresë IP ose Network.');
     }
+
+    // Store base network info for "show all subnets" feature
+    window.baseNetworkInfo = {
+        baseNetL: baseNetL,
+        maskL: maskL,
+        basePrefix: basePrefix,
+        ipAddress: ip
+    };
 
     // Basic network info
     const netL = baseNetL;
@@ -115,21 +121,23 @@ function calculate() {
     const broadID = long2ip(broadL);
     const ip_first = hosts_total >= 2 ? long2ip(firstL) : '-';
     const ip_last = hosts_total >= 2 ? long2ip(lastL) : '-';
+    const maskStr = long2ip(maskL);
 
     // Subnetting if requested
     const subnets = [];
+    let newPrefix = basePrefix;
     if (nr && nr > 0) {
         if (nr === 1) {
-            notes.push('Number of subnets requested is 1 — returning the base network.');
+            notes.push('U kërkua 1 subnet - po kthehet rrjeti bazë.');
         }
         const bits = Math.ceil(Math.log2(nr));
         if (bits > (32 - basePrefix)) {
-            return showError('Requested number of subnets requires more bits than available in the base network mask.');
+            return showError('Numri i subnet-eve të kërkuara kërkon më shumë bit se sa ka në dispozicion në maskën bazë.');
         }
-        const newPrefix = basePrefix + bits;
+        newPrefix = basePrefix + bits;
         const step = Math.pow(2, 32 - newPrefix) >>> 0;
         const possible = Math.pow(2, bits);
-        if (possible > nr) notes.push(`Can only create subnet counts in powers of two; ${possible} subnets will be created to cover ${nr} requested.`);
+        if (possible > nr) notes.push(`Mund të krijohen vetëm numra të subnet-eve në fuqi të 2-shit; do të krijohen ${possible} subnet për të mbuluar ${nr} të kërkuara.`);
 
         // Align base network to new prefix boundary
         const newMaskL = maskForPrefix(newPrefix);
@@ -151,10 +159,10 @@ function calculate() {
             });
         }
 
-        notes.push(`Each subnet has mask /${newPrefix} and ${step} total hosts (${step >= 2 ? step - 2 : 0} usable).`);
+        notes.push(`Çdo subnet ka mask /${newPrefix} dhe ${formatNumber(step)} host në total (${step >= 2 ? formatNumber(step - 2) : 0} të përdorshëm).`);
     }
 
-    displayResults(netID, broadID, ip_first, ip_last, hosts_total, hosts_active, subnets, notes);
+    displayResults(netID, broadID, ip_first, ip_last, hosts_total, hosts_active, maskStr, basePrefix, subnets, notes);
 }
 
 function showError(msg) {
@@ -162,32 +170,33 @@ function showError(msg) {
     const subnetResults = document.getElementById('subnetResults');
     basicResults.innerHTML = `<div class="empty-state">⚠️ ${msg}</div>`;
     subnetResults.innerHTML = '';
-    document.getElementById('results').style.display = 'block';
+    document.getElementById('showAllSubnetsBtn').style.display = 'none';
 }
 
-function displayResults(netID, broadID, ip_first, ip_last, hosts_total, hosts_active, subnets, notes) {
+function displayResults(netID, broadID, ip_first, ip_last, hosts_total, hosts_active, maskStr, prefix, subnets, notes) {
     const basicResults = document.getElementById('basicResults');
     const subnetResults = document.getElementById('subnetResults');
     const resultsNotes = document.getElementById('resultsNotes');
 
     let noteHtml = '';
     if (notes && notes.length) {
-        noteHtml = `<div class="empty-state">💡 ${notes.join(' ')} </div>`;
+        noteHtml = `<div class="empty-state">💡 ${notes.join(' ')}</div>`;
     }
 
-    let html = '';
-    html += noteHtml;
-    html += '<div class="grid-2">';
-    if (netID) html += `<div class="input-group result-field"><label>🌐 Network ID</label><input readonly value="${netID}" id="res-netid"><button class="copy-btn" data-copy="#res-netid" title="Copy Network ID">📋</button></div>`;
-    if (broadID) html += `<div class="input-group result-field"><label>📡 Broadcast ID</label><input readonly value="${broadID}" id="res-broadid"><button class="copy-btn" data-copy="#res-broadid" title="Copy Broadcast ID">📋</button></div>`;
-    if (ip_first) html += `<div class="input-group result-field"><label>▶️ First IP</label><input readonly value="${ip_first}" id="res-first"><button class="copy-btn" data-copy="#res-first" title="Copy First IP">📋</button></div>`;
-    if (ip_last) html += `<div class="input-group result-field"><label>⏸️ Last IP</label><input readonly value="${ip_last}" id="res-last"><button class="copy-btn" data-copy="#res-last" title="Copy Last IP">📋</button></div>`;
-    if (hosts_total !== undefined) html += `<div class="input-group result-field"><label>💻 Total Hosts</label><input readonly value="${formatNumber(hosts_total)}" id="res-total"><button class="copy-btn" data-copy="#res-total" title="Copy Total Hosts">📋</button></div>`;
-    if (hosts_active !== undefined) html += `<div class="input-group result-field"><label>✅ Active Hosts</label><input readonly value="${formatNumber(hosts_active)}" id="res-active"><button class="copy-btn" data-copy="#res-active" title="Copy Active Hosts">📋</button></div>`;
+    resultsNotes.innerHTML = noteHtml;
+
+    let html = '<div class="grid-2">';
+    if (netID) html += `<div class="input-group result-field"><label>🌐 Network ID</label><input readonly value="${netID}" id="res-netid"><button class="copy-btn" data-copy="#res-netid" title="Kopjo Network ID">📋</button></div>`;
+    if (broadID) html += `<div class="input-group result-field"><label>📡 Broadcast ID</label><input readonly value="${broadID}" id="res-broadid"><button class="copy-btn" data-copy="#res-broadid" title="Kopjo Broadcast ID">📋</button></div>`;
+    if (ip_first) html += `<div class="input-group result-field"><label>▶️ First IP</label><input readonly value="${ip_first}" id="res-first"><button class="copy-btn" data-copy="#res-first" title="Kopjo First IP">📋</button></div>`;
+    if (ip_last) html += `<div class="input-group result-field"><label>⏸️ Last IP</label><input readonly value="${ip_last}" id="res-last"><button class="copy-btn" data-copy="#res-last" title="Kopjo Last IP">📋</button></div>`;
+    if (maskStr) html += `<div class="input-group result-field"><label>🎭 Subnet Mask</label><input readonly value="${maskStr}" id="res-mask"><button class="copy-btn" data-copy="#res-mask" title="Kopjo Mask">📋</button></div>`;
+    html += `<div class="input-group result-field"><label>🔢 Prefix Length</label><input readonly value="/${prefix}" id="res-prefix"><button class="copy-btn" data-copy="#res-prefix" title="Kopjo Prefix">📋</button></div>`;
+    if (hosts_total !== undefined) html += `<div class="input-group result-field"><label>💻 Total Hosts</label><input readonly value="${formatNumber(hosts_total)}" id="res-total"><button class="copy-btn" data-copy="#res-total" title="Kopjo Total Hosts">📋</button></div>`;
+    if (hosts_active !== undefined) html += `<div class="input-group result-field"><label>✅ Active Hosts</label><input readonly value="${formatNumber(hosts_active)}" id="res-active"><button class="copy-btn" data-copy="#res-active" title="Kopjo Active Hosts">📋</button></div>`;
     html += '</div>';
 
     basicResults.innerHTML = html;
-    resultsNotes.innerHTML = noteHtml;
 
     let subnetHtml = '';
     if (subnets && subnets.length > 0) {
@@ -209,7 +218,8 @@ function displayResults(netID, broadID, ip_first, ip_last, hosts_total, hosts_ac
                     'Active Hosts': '✅'
                 };
                 const id = `sub-${i}-${key.replace(/\s+/g,'').toLowerCase()}`;
-                subnetHtml += `<div class="input-group result-field"><label>${icons[key]} ${key}</label><input readonly value="${value}" id="${id}"><button class="copy-btn" data-copy="#${id}" title="Copy ${key}">📋</button></div>`;
+                const displayValue = (key === 'Total Hosts' || key === 'Active Hosts') ? formatNumber(value) : value;
+                subnetHtml += `<div class="input-group result-field"><label>${icons[key]} ${key}</label><input readonly value="${displayValue}" id="${id}"><button class="copy-btn" data-copy="#${id}" title="Kopjo ${key}">📋</button></div>`;
             }
             subnetHtml += '</div></div>';
         });
@@ -218,21 +228,92 @@ function displayResults(netID, broadID, ip_first, ip_last, hosts_total, hosts_ac
 
     subnetResults.innerHTML = subnetHtml;
 
+    // Show "All Subnets" button
+    const showAllBtn = document.getElementById('showAllSubnetsBtn');
+    if (showAllBtn) {
+        showAllBtn.style.display = 'block';
+        showAllBtn.onclick = showAllPossibleSubnets;
+    }
+
     // Attach copy handlers
     setupCopyButtons();
 
-    document.getElementById('results').style.display = 'block';
     setTimeout(() => {
-        document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }, 100);
 }
 
-function resetForm() {
-    document.getElementById('calcForm').reset();
-    document.getElementById('results').style.display = 'none';
-    document.getElementById('basicResults').innerHTML = '';
-    document.getElementById('subnetResults').innerHTML = '';
-    document.getElementById('resultsNotes').innerHTML = '';
+function showAllPossibleSubnets() {
+    if (!window.baseNetworkInfo) return;
+
+    const { baseNetL, maskL, basePrefix, ipAddress } = window.baseNetworkInfo;
+    
+    // Calculate all possible /24 subnets (or current prefix +1)
+    const targetPrefix = Math.min(basePrefix + 8, 30); // Show up to /30
+    const newMaskL = maskForPrefix(targetPrefix);
+    const step = Math.pow(2, 32 - targetPrefix) >>> 0;
+    
+    // Calculate how many subnets we can create
+    const totalSubnets = Math.pow(2, targetPrefix - basePrefix);
+    
+    // Limit display to reasonable amount
+    const maxDisplay = Math.min(totalSubnets, 256);
+    
+    const subnets = [];
+    const alignedBase = (baseNetL & newMaskL) >>> 0;
+    
+    for (let i = 0; i < maxDisplay; i++) {
+        const sNet = (alignedBase + (i * step)) >>> 0;
+        const sBroad = (sNet + step - 1) >>> 0;
+        const sFirst = (sNet + 1) >>> 0;
+        const sLast = (sBroad - 1) >>> 0;
+        
+        subnets.push({
+            index: i + 1,
+            network: long2ip(sNet),
+            broadcast: long2ip(sBroad),
+            first: step >= 2 ? long2ip(sFirst) : '-',
+            last: step >= 2 ? long2ip(sLast) : '-',
+            hosts: step >= 2 ? (step - 2) : 0,
+            mask: `/${targetPrefix}`
+        });
+    }
+    
+    displayAllSubnets(subnets, totalSubnets, maxDisplay);
+}
+
+function displayAllSubnets(subnets, total, displayed) {
+    const subnetResults = document.getElementById('subnetResults');
+    
+    let html = '<div class="divider"></div>';
+    html += `<div class="result-title">🌐 Të gjitha Subnetet <span class="info-badge">${displayed}${total > displayed ? ' nga ' + total : ''}</span></div>`;
+    
+    if (total > displayed) {
+        html += `<div class="empty-state">💡 Duke shfaqur ${displayed} subnet të para nga ${formatNumber(total)} në total.</div>`;
+    }
+    
+    html += '<div class="all-subnets-container">';
+    
+    subnets.forEach(subnet => {
+        html += `<div class="subnet-item">`;
+        html += `<div class="subnet-item-info">`;
+        html += `<div><span class="subnet-item-label">#${subnet.index}</span></div>`;
+        html += `<div><span class="subnet-item-label">Network:</span> <span class="subnet-item-value">${subnet.network}${subnet.mask}</span></div>`;
+        html += `<div><span class="subnet-item-label">First IP:</span> <span class="subnet-item-value">${subnet.first}</span></div>`;
+        html += `<div><span class="subnet-item-label">Last IP:</span> <span class="subnet-item-value">${subnet.last}</span></div>`;
+        html += `<div><span class="subnet-item-label">Hosts:</span> <span class="subnet-item-value">${formatNumber(subnet.hosts)}</span></div>`;
+        html += `</div>`;
+        html += `</div>`;
+    });
+    
+    html += '</div>';
+    
+    subnetResults.innerHTML += html;
+    
+    // Scroll to the new section
+    setTimeout(() => {
+        document.querySelector('.all-subnets-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
 }
 
 // Copy helpers
@@ -267,21 +348,14 @@ function setupCopyButtons() {
     if (copyAll) {
         copyAll.removeEventListener('click', copyAll._cb);
         copyAll._cb = () => {
-            // collect visible result inputs
-            const values = Array.from(document.querySelectorAll('#basicResults input[readonly], .subnet-list input[readonly]'))
-                .map(i => i.value)
+            const values = Array.from(document.querySelectorAll('#basicResults input[readonly], .subnet-card input[readonly]'))
+                .map(i => i.previousElementSibling.textContent + ': ' + i.value)
                 .filter(v => v !== undefined && v !== null && String(v).trim() !== '');
             if (values.length === 0) return;
             navigator.clipboard.writeText(values.join('\n'))
-                .then(() => { copyAll.textContent = '✅'; setTimeout(()=> copyAll.textContent = '📋',900); })
-                .catch(() => { copyAll.textContent = '❌'; setTimeout(()=> copyAll.textContent = '📋',900); });
+                .then(() => { copyAll.textContent = '✅ Kopjuar'; setTimeout(()=> copyAll.textContent = '📋 Kopjo të gjitha',1200); })
+                .catch(() => { copyAll.textContent = '❌ Gabim'; setTimeout(()=> copyAll.textContent = '📋 Kopjo të gjitha',1200); });
         };
         copyAll.addEventListener('click', copyAll._cb);
     }
 }
-
-// Form submission handler
-document.getElementById('calcForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    calculate();
-});
