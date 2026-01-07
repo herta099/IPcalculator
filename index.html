@@ -2,62 +2,30 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Subnet Calculator - Input</title>
+<title>Calculator</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- VIDEO BACKGROUND -->
 <video class="bg" autoplay muted loop>
   <source src="p1.mp4" type="video/mp4">
 </video>
 
-<div class="container">
-    <div class="card">
-        <h1>🌐 Subnet Calculator</h1>
-        <p class="subtitle">Calculate network subnets, IP ranges, and host information</p>
+<div class="box">
+    <h2>Calculator</h2>
+    
+    <form action="result.html" method="get">
+        IP:
+        <input name="ip" placeholder="Ex: 192.168.1.10/24">
         
-        <form id="calcForm" action="result.html" method="get">
-            <div class="input-group">
-                <label for="ip">IP Address <span class="tooltip" data-tip="Enter a valid IPv4 address">ⓘ</span></label>
-                <div class="input-wrapper">
-                    <span class="icon">🖥️</span>
-                    <input id="ip" name="ip" type="text" placeholder="e.g., 192.168.1.10">
-                </div>
-            </div>
-
-            <div class="input-group">
-                <label for="network">Network ID <span class="tooltip" data-tip="Base network address">ⓘ</span></label>
-                <div class="input-wrapper">
-                    <span class="icon">🌐</span>
-                    <input id="network" name="network" type="text" placeholder="e.g., 192.168.1.0">
-                </div>
-            </div>
-
-            <div class="grid-2">
-                <div class="input-group">
-                    <label for="mask">Subnet Mask <span class="tooltip" data-tip="Use /24 or 255.255.255.0 format">ⓘ</span></label>
-                    <div class="input-wrapper">
-                        <span class="icon">🔒</span>
-                        <input id="mask" name="mask" type="text" placeholder="e.g., 255.255.255.0 or /24">
-                    </div>
-                </div>
-
-                <div class="input-group">
-                    <label for="nr_subnets">Number of Subnets <span class="tooltip" data-tip="How many subnets to create">ⓘ</span></label>
-                    <div class="input-wrapper">
-                        <span class="icon">🔢</span>
-                        <input id="nr_subnets" name="nr_subnets" type="number" placeholder="e.g., 4" min="1">
-                    </div>
-                </div>
-            </div>
-
-            <div class="help-text">💡 Leave mask empty to assume /24. Use either IP or Network ID.</div>
-
-            <button type="submit" class="btn">✨ Calculate</button>
-        </form>
-    </div>
+        Network ID:
+        <input name="network" placeholder="Ex: 192.168.1.0">
+        
+        Subnnet Musk:
+        <input name="mask" placeholder="Ex: 255.255.255.0">
+        
+        <button type="submit">Calculate</button>
+    </form>
 </div>
 
 </body>
