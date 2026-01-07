@@ -91,6 +91,7 @@ input[readonly] {
 }
 
 button, .btn-blue, .btn-green, .btn-copy, .btn-search, .btn-calc {
+    width: 100%;
     padding: 15px 25px;
     border: none;
     border-radius: 12px;
@@ -102,18 +103,27 @@ button, .btn-blue, .btn-green, .btn-copy, .btn-search, .btn-calc {
     font-weight: bold;
     transition: all 0.3s;
     color: white;
+    box-sizing: border-box;
 }
 
-button, .btn-blue {
-    width: 100%;
+button {
     background: #6ec6ff;
     margin-top: 25px;
 }
 
-button:hover, .btn-blue:hover {
+button:hover {
     background: #5ab3e8;
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(110, 198, 255, 0.4);
+}
+
+.btn-blue {
+    background: #6ec6ff;
+}
+
+.btn-blue:hover {
+    background: #5ab3e8;
+    transform: translateY(-2px);
 }
 
 .btn-green {
