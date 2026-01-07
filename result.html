@@ -16,6 +16,22 @@
     
     <div class="row">
         <div>
+            <label>IP Class:</label>
+            <input readonly id="ipclass">
+        </div>
+        <div>
+            <label>Subnet Mask:</label>
+            <input readonly id="subnetmask">
+        </div>
+    </div>
+    
+    <div>
+        <label>Binary Subnet Mask:</label>
+        <input readonly id="binarymask" style="font-family: monospace; font-size: 13px;">
+    </div>
+    
+    <div class="row">
+        <div>
             <label>Network ID:</label>
             <input readonly id="netid">
         </div>
@@ -57,8 +73,7 @@
     
     <div id="subnets"></div>
     
-    <div class="button-row">
-        <a href="hosts.html" class="btn-green">Hosts</a>
+    <div style="margin-top: 30px; text-align: center;">
         <a href="index.html" class="btn-blue">Reset</a>
     </div>
 </div>

@@ -15,6 +15,26 @@ function long2ip(long) {
     ].join('.');
 }
 
+function long2binary(long) {
+    let binary = '';
+    for (let i = 0; i < 4; i++) {
+        const octet = (long >>> (24 - i * 8)) & 0xFF;
+        binary += octet.toString(2).padStart(8, '0');
+        if (i < 3) binary += '.';
+    }
+    return binary;
+}
+
+function getIPClass(ip) {
+    const firstOctet = parseInt(ip.split('.')[0]);
+    if (firstOctet >= 1 && firstOctet <= 126) return 'Class A';
+    if (firstOctet >= 128 && firstOctet <= 191) return 'Class B';
+    if (firstOctet >= 192 && firstOctet <= 223) return 'Class C';
+    if (firstOctet >= 224 && firstOctet <= 239) return 'Class D (Multicast)';
+    if (firstOctet >= 240 && firstOctet <= 255) return 'Class E (Reserved)';
+    return 'Unknown';
+}
+
 function parseMask(maskStr) {
     if (!maskStr) return null;
     maskStr = maskStr.trim();
@@ -47,6 +67,7 @@ const maskInput = params.get('mask') || '';
 const nrSubnets = parseInt(params.get('nr_subnets') || '0');
 
 let netL, maskL, basePrefix = 24;
+let originalIP = '';
 
 const maskInfo = parseMask(maskInput);
 if (maskInfo) {
@@ -59,9 +80,11 @@ if (maskInfo) {
 
 if (networkInput) {
     netL = ip2long(networkInput) & maskL;
+    originalIP = networkInput;
 } else if (ipInput) {
     const ipOnly = ipInput.split('/')[0];
     netL = ip2long(ipOnly) & maskL;
+    originalIP = ipOnly;
 } else {
     alert('Ju lutem vendosni një IP ose Network ID!');
 }
@@ -72,6 +95,10 @@ const lastL = broadL - 1;
 const hostsTotal = ((~maskL >>> 0) + 1) >>> 0;
 const hostsActive = hostsTotal >= 2 ? hostsTotal - 2 : 0;
 
+// Shfaq rezultatet
+document.getElementById('ipclass').value = getIPClass(originalIP);
+document.getElementById('subnetmask').value = long2ip(maskL);
+document.getElementById('binarymask').value = long2binary(maskL);
 document.getElementById('netid').value = long2ip(netL);
 document.getElementById('broadid').value = long2ip(broadL);
 document.getElementById('firstip').value = long2ip(firstL);
@@ -80,15 +107,6 @@ document.getElementById('hosttotal').value = hostsTotal;
 document.getElementById('hostaktiv').value = hostsActive;
 document.getElementById('rangefirst').value = long2ip(firstL);
 document.getElementById('rangelast').value = long2ip(lastL);
-
-localStorage.setItem('main_network', JSON.stringify({
-    netID: long2ip(netL),
-    broadID: long2ip(broadL),
-    firstL: firstL,
-    lastL: lastL,
-    hostsTotal: hostsTotal,
-    hostsActive: hostsActive
-}));
 
 if (nrSubnets > 0) {
     const bitsNeeded = Math.ceil(Math.log2(nrSubnets));
@@ -102,8 +120,6 @@ if (nrSubnets > 0) {
         
         let subnetHtml = '<div class="subnet-section"><h3 style="text-align:center; margin-bottom:20px;">Subnetet (' + nrSubnets + ')</h3>';
         
-        const subnetsData = [];
-        
         for (let i = 0; i < nrSubnets; i++) {
             const subnetNet = (netL + (i * subnetSize)) >>> 0;
             const subnetBroad = (subnetNet + subnetSize - 1) >>> 0;
@@ -111,15 +127,6 @@ if (nrSubnets > 0) {
             const subnetLast = subnetBroad - 1;
             const subnetHostsTotal = subnetSize;
             const subnetHostsActive = subnetSize >= 2 ? subnetSize - 2 : 0;
-            
-            subnetsData.push({
-                subnetID: long2ip(subnetNet),
-                broadID: long2ip(subnetBroad),
-                firstL: subnetFirst,
-                lastL: subnetLast,
-                hostsTotal: subnetHostsTotal,
-                hostsActive: subnetHostsActive
-            });
             
             subnetHtml += `
             <div class="subnet-card">
@@ -159,7 +166,5 @@ if (nrSubnets > 0) {
         
         subnetHtml += '</div>';
         document.getElementById('subnets').innerHTML = subnetHtml;
-        
-        localStorage.setItem('subnets_data', JSON.stringify(subnetsData));
     }
 }
