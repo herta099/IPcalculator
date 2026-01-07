@@ -1,81 +1,165 @@
 function ip2long(ip) {
-    const p = ip.split('.');
-    return (parseInt(p[0]) << 24) + (parseInt(p[1]) << 16) + (parseInt(p[2]) << 8) + parseInt(p[3]);
+    const parts = ip.split('.');
+    return ((parseInt(parts[0]) << 24) >>> 0) + 
+           ((parseInt(parts[1]) << 16) >>> 0) + 
+           ((parseInt(parts[2]) << 8) >>> 0) + 
+           (parseInt(parts[3]) >>> 0);
 }
 
-function long2ip(l) {
-    return [(l >>> 24) & 255, (l >>> 16) & 255, (l >>> 8) & 255, l & 255].join('.');
+function long2ip(long) {
+    return [
+        (long >>> 24) & 0xFF,
+        (long >>> 16) & 0xFF,
+        (long >>> 8) & 0xFF,
+        long & 0xFF
+    ].join('.');
 }
 
-function maskForPrefix(prefix) {
-    return ((0xFFFFFFFF << (32 - prefix)) >>> 0);
+function parseMask(maskStr) {
+    if (!maskStr) return null;
+    maskStr = maskStr.trim();
+    
+    if (maskStr.startsWith('/')) {
+        const prefix = parseInt(maskStr.slice(1), 10);
+        if (prefix >= 0 && prefix <= 32) {
+            const maskLong = (0xFFFFFFFF << (32 - prefix)) >>> 0;
+            return { prefix: prefix, maskLong: maskLong };
+        }
+    }
+    
+    if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(maskStr)) {
+        const maskLong = ip2long(maskStr);
+        let prefix = 0;
+        for (let i = 31; i >= 0; i--) {
+            if ((maskLong >>> i) & 1) prefix++;
+            else break;
+        }
+        return { prefix: prefix, maskLong: maskLong };
+    }
+    
+    return null;
 }
 
 const params = new URLSearchParams(window.location.search);
-const ip = params.get('ip') || '';
-const network = params.get('network') || '';
-const mask = params.get('mask') || '255.255.255.0';
-const nrHosts = parseInt(params.get('nr_hosts') || '0');
+const ipInput = params.get('ip') || '';
+const networkInput = params.get('network') || '';
+const maskInput = params.get('mask') || '';
+const nrSubnets = parseInt(params.get('nr_subnets') || '0');
 
-let netL, maskL, broadL;
+let netL, maskL, basePrefix = 24;
 
-if (network) {
-    netL = ip2long(network);
-    maskL = ip2long(mask);
-} else if (ip) {
-    const ipOnly = ip.split('/')[0];
-    maskL = ip2long(mask);
-    netL = ip2long(ipOnly) & maskL;
+const maskInfo = parseMask(maskInput);
+if (maskInfo) {
+    maskL = maskInfo.maskLong;
+    basePrefix = maskInfo.prefix;
+} else {
+    maskL = (0xFFFFFFFF << 8) >>> 0;
+    basePrefix = 24;
 }
 
-broadL = (netL | (~maskL >>> 0)) >>> 0;
+if (networkInput) {
+    netL = ip2long(networkInput) & maskL;
+} else if (ipInput) {
+    const ipOnly = ipInput.split('/')[0];
+    netL = ip2long(ipOnly) & maskL;
+} else {
+    alert('Ju lutem vendosni një IP ose Network ID!');
+}
+
+const broadL = (netL | (~maskL >>> 0)) >>> 0;
 const firstL = netL + 1;
 const lastL = broadL - 1;
-const total = (~maskL >>> 0) + 1;
-const active = total - 2;
+const hostsTotal = ((~maskL >>> 0) + 1) >>> 0;
+const hostsActive = hostsTotal >= 2 ? hostsTotal - 2 : 0;
 
 document.getElementById('netid').value = long2ip(netL);
 document.getElementById('broadid').value = long2ip(broadL);
 document.getElementById('firstip').value = long2ip(firstL);
 document.getElementById('lastip').value = long2ip(lastL);
-document.getElementById('hosttotal').value = total;
-document.getElementById('hostaktiv').value = active;
+document.getElementById('hosttotal').value = hostsTotal;
+document.getElementById('hostaktiv').value = hostsActive;
 document.getElementById('rangefirst').value = long2ip(firstL);
 document.getElementById('rangelast').value = long2ip(lastL);
 
-localStorage.setItem('hosts_data', JSON.stringify({
+localStorage.setItem('main_network', JSON.stringify({
+    netID: long2ip(netL),
+    broadID: long2ip(broadL),
     firstL: firstL,
     lastL: lastL,
-    total: total
+    hostsTotal: hostsTotal,
+    hostsActive: hostsActive
 }));
 
-if (nrHosts > 0) {
-    const bits = Math.ceil(Math.log2(nrHosts));
-    const newPrefix = 32 - bits;
-    const step = Math.pow(2, bits);
+if (nrSubnets > 0) {
+    const bitsNeeded = Math.ceil(Math.log2(nrSubnets));
+    const newPrefix = basePrefix + bitsNeeded;
     
-    let subnetHtml = '<div style="margin-top:30px"><h3>Subnetet:</h3>';
-    
-    for (let i = 0; i < nrHosts; i++) {
-        const sNet = netL + (i * step);
-        const sBroad = sNet + step - 1;
-        const sFirst = sNet + 1;
-        const sLast = sBroad - 1;
+    if (newPrefix > 32) {
+        alert('Nuk ka mjaftueshëm hapësirë për këto subnete!');
+    } else {
+        const newMaskL = (0xFFFFFFFF << (32 - newPrefix)) >>> 0;
+        const subnetSize = Math.pow(2, 32 - newPrefix);
         
-        subnetHtml += `
-        <div style="background:#f0f0f0; padding:15px; margin:10px 0; border-radius:8px;">
-            <strong>Subnet ${i + 1}</strong>
-            <div class="row" style="margin-top:10px;">
-                <div>Network: ${long2ip(sNet)}</div>
-                <div>Broadcast: ${long2ip(sBroad)}</div>
-            </div>
-            <div class="row">
-                <div>First IP: ${long2ip(sFirst)}</div>
-                <div>Last IP: ${long2ip(sLast)}</div>
-            </div>
-        </div>`;
+        let subnetHtml = '<div class="subnet-section"><h3 style="text-align:center; margin-bottom:20px;">Subnetet (' + nrSubnets + ')</h3>';
+        
+        const subnetsData = [];
+        
+        for (let i = 0; i < nrSubnets; i++) {
+            const subnetNet = (netL + (i * subnetSize)) >>> 0;
+            const subnetBroad = (subnetNet + subnetSize - 1) >>> 0;
+            const subnetFirst = subnetNet + 1;
+            const subnetLast = subnetBroad - 1;
+            const subnetHostsTotal = subnetSize;
+            const subnetHostsActive = subnetSize >= 2 ? subnetSize - 2 : 0;
+            
+            subnetsData.push({
+                subnetID: long2ip(subnetNet),
+                broadID: long2ip(subnetBroad),
+                firstL: subnetFirst,
+                lastL: subnetLast,
+                hostsTotal: subnetHostsTotal,
+                hostsActive: subnetHostsActive
+            });
+            
+            subnetHtml += `
+            <div class="subnet-card">
+                <h3>Subnet #${i + 1} - /${newPrefix}</h3>
+                <div class="row">
+                    <div>
+                        <label>Subnet ID:</label>
+                        <input readonly value="${long2ip(subnetNet)}">
+                    </div>
+                    <div>
+                        <label>Broadcast ID:</label>
+                        <input readonly value="${long2ip(subnetBroad)}">
+                    </div>
+                </div>
+                <div class="row">
+                    <div>
+                        <label>IP E Parë:</label>
+                        <input readonly value="${long2ip(subnetFirst)}">
+                    </div>
+                    <div>
+                        <label>IP E Fundit:</label>
+                        <input readonly value="${long2ip(subnetLast)}">
+                    </div>
+                </div>
+                <div class="row">
+                    <div>
+                        <label>Host Total:</label>
+                        <input readonly value="${subnetHostsTotal}">
+                    </div>
+                    <div>
+                        <label>Host Aktiv:</label>
+                        <input readonly value="${subnetHostsActive}">
+                    </div>
+                </div>
+            </div>`;
+        }
+        
+        subnetHtml += '</div>';
+        document.getElementById('subnets').innerHTML = subnetHtml;
+        
+        localStorage.setItem('subnets_data', JSON.stringify(subnetsData));
     }
-    
-    subnetHtml += '</div>';
-    document.getElementById('subnets').innerHTML = subnetHtml;
 }
