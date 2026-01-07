@@ -1,6 +1,6 @@
 body {
     margin: 0;
-    font-family: Arial;
+    font-family: Arial, sans-serif;
 }
 
 .bg {
@@ -14,38 +14,177 @@ body {
 }
 
 .box {
-    background: rgba(255, 255, 255, 0.9);
-    width: 420px;
+    background: rgba(255, 255, 255, 0.95);
+    width: 500px;
     margin: 50px auto;
-    padding: 30px;
-    border-radius: 15px;
+    padding: 40px;
+    border-radius: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.box-hosts {
+    background: rgba(20, 30, 50, 0.95);
+    width: 900px;
+    margin: 30px auto;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    color: white;
 }
 
 h2 {
     text-align: center;
-    margin-bottom: 20px;
+    margin: 0 0 30px 0;
+    font-size: 28px;
+    font-weight: normal;
+}
+
+.box-hosts h2 {
+    display: inline-block;
+    margin-right: 15px;
+}
+
+.badge {
+    display: inline-block;
+    background: #6c63ff;
+    color: white;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+label {
+    display: block;
+    font-size: 16px;
+    margin: 15px 0 5px 0;
 }
 
 input {
     width: 100%;
-    padding: 10px;
-    margin: 8px 0;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 15px;
     box-sizing: border-box;
 }
 
-button {
-    width: 100%;
-    padding: 12px;
-    margin-top: 10px;
-    background: #6ec6ff;
-    border: 0;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
+input:focus {
+    outline: none;
+    border-color: #6ec6ff;
 }
 
-button:hover {
+input[readonly] {
+    background: #f5f5f5;
+    border-color: #e0e0e0;
+}
+
+.row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.range-box {
+    margin-top: 20px;
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 10px;
+}
+
+button, .btn-blue, .btn-green, .btn-copy, .btn-search, .btn-calc {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+button, .btn-blue {
+    background: #6ec6ff;
+    color: white;
+}
+
+button:hover, .btn-blue:hover {
     background: #5ab3e8;
+    transform: translateY(-2px);
+}
+
+.btn-green {
+    background: #4caf50;
+    color: white;
+}
+
+.btn-green:hover {
+    background: #45a049;
+}
+
+.button-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.button-row.three {
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+.btn-copy {
+    background: #2c3e50;
+    color: white;
+}
+
+.btn-search {
+    background: #3498db;
+    color: white;
+}
+
+.btn-calc {
+    background: #6ec6ff;
+    color: white;
+}
+
+.subnet-item {
+    background: rgba(50, 60, 80, 0.8);
+    padding: 20px;
+    margin: 15px 0;
+    border-radius: 10px;
+    border-left: 5px solid #6c63ff;
+}
+
+.subnet-item h3 {
+    margin: 0 0 10px 0;
+    color: #6c63ff;
+}
+
+.subnet-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.subnet-field {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.subnet-field label {
+    font-size: 12px;
+    color: #aaa;
+    margin: 0 0 5px 0;
+}
+
+.subnet-field .value {
+    font-size: 15px;
+    font-weight: bold;
+    color: white;
 }

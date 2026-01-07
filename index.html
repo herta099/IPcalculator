@@ -15,14 +15,22 @@
     <h2>Calculator</h2>
     
     <form action="result.html" method="get">
-        IP:
+        <label>IP:</label>
         <input name="ip" placeholder="Ex: 192.168.1.10/24">
         
-        Network ID:
-        <input name="network" placeholder="Ex: 192.168.1.0">
+        <div class="row">
+            <div>
+                <label>Network ID:</label>
+                <input name="network" placeholder="Ex: 192.168.1.0">
+            </div>
+            <div>
+                <label>Subnet Mask:</label>
+                <input name="mask" placeholder="Ex: 255.255.255.0">
+            </div>
+        </div>
         
-        Subnnet Musk:
-        <input name="mask" placeholder="Ex: 255.255.255.0">
+        <label>Nr Hosteve:</label>
+        <input name="nr_hosts" type="number" placeholder="Ex: 4">
         
         <button type="submit">Calculate</button>
     </form>

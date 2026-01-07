@@ -14,36 +14,53 @@
 <div class="box">
     <h2>Calculator</h2>
     
-    Network ID:
-    <input readonly id="netid">
-    
-    Broadcast ID:
-    <input readonly id="broadid">
-    
-    IP E Pare:
-    <input readonly id="firstip">
-    
-    IP E Fundit:
-    <input readonly id="lastip">
-    
-    Host Total:
-    <input readonly id="hosttotal">
-    
-    Host Aktiv:
-    <input readonly id="hostaktiv">
-    
-    Range I Hosteve:
-    <div style="margin-top:10px">
-        Host I Pare:
-        <input readonly id="hostfirst">
-        
-        Host I Fundit:
-        <input readonly id="hostlast">
+    <div class="row">
+        <div>
+            <label>Network ID:</label>
+            <input readonly id="netid">
+        </div>
+        <div>
+            <label>Broadcast ID:</label>
+            <input readonly id="broadid">
+        </div>
     </div>
     
-    <form action="index.html">
-        <button type="submit">Reset</button>
-    </form>
+    <div class="row">
+        <div>
+            <label>IP E Pare:</label>
+            <input readonly id="firstip">
+        </div>
+        <div>
+            <label>IP E Fundit:</label>
+            <input readonly id="lastip">
+        </div>
+    </div>
+    
+    <div class="row">
+        <div>
+            <label>Host Total:</label>
+            <input readonly id="hosttotal">
+        </div>
+        <div>
+            <label>Host Aktiv:</label>
+            <input readonly id="hostaktiv">
+        </div>
+    </div>
+    
+    <div class="range-box">
+        <label>Range I Hosteve:</label>
+        <label>Host I Pare:</label>
+        <input readonly id="rangefirst">
+        <label>Host I Fundit:</label>
+        <input readonly id="rangelast">
+    </div>
+    
+    <div id="subnets"></div>
+    
+    <div class="button-row">
+        <a href="hosts.html" class="btn-green">Hosts</a>
+        <a href="index.html" class="btn-blue">Reset</a>
+    </div>
 </div>
 
 <script src="script.js"></script>
